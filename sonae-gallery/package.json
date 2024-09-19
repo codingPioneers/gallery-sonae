@@ -1,0 +1,30 @@
+{
+  "name": "sonae-gallery",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "file-saver": "^2.0.5",
+    "firebase": "^10.13.1",
+    "framer-motion": "^11.5.4",
+    "jszip": "^3.10.1",
+    "next": "14.2.11",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-swipeable": "^7.0.1"
+  },
+  "devDependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.11",
+    "typescript": "^5"
+  }
+}

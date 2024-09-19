@@ -1,0 +1,459 @@
+/* Estilo para o fundo do site */
+.background {
+  
+  min-height: 100vh;
+  margin: 0 auto;
+  width: 90%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  
+}
+
+.circle, .circle1{
+  display: none;
+}
+
+.risca{
+  height: 20px;
+  padding: -3px 0;
+}
+
+.heroSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 50px 80px;
+  background-color: #000e63;
+  height: 80vh;
+  position: relative; /* Make the section positioning relative */
+}
+
+/* Left Content (60% for desktop, 100% for mobile) */
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 60%; /* 60% width for desktop */
+  z-index: 2; /* Ensure content stays above the background image */
+}
+
+/* Text and Logo Styling */
+.heroLogo {
+  width: 110%; /* Adjust this value according to the logo size */
+  height: auto;
+  margin-bottom: 20px;
+}
+
+.textContainer {
+  color: white;
+}
+
+.heroSubtitle {
+  font-size: 2rem;
+  font-weight: bolder;
+  margin: 10px 0;
+}
+
+
+
+/* Right Image (40% for desktop, 20% for mobile) */
+.heroImageContainer {
+  position: absolute; /* Position the image absolutely */
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.heroImage {
+  max-height: 100vh; /* Ensure the image takes the full height */
+  width: auto;
+  margin-right: -10rem;
+}
+/* Mobile Adjustments */
+@media (max-width: 950px) {
+  .heroSection {
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px 0px;
+    height: auto; /* Adjust height based on content */
+  }
+
+  .heroContent {
+    max-width: 100%; /* Full width on mobile */
+    text-align: center; /* Center text */
+    align-items: center;
+  }
+
+  .heroLogo {
+    width: 60%; /* Smaller logo for mobile */
+    margin-bottom: 15px;
+  }
+
+  .textContainer {
+    margin-top: 20px;
+  }
+
+  .circle{
+    display: block;
+    position: absolute;
+    width: 250px;
+    right: -150px;
+    top: -150px;
+
+  }
+
+  .circle1{
+    display: block;
+    position: absolute;
+    width: 250px;
+    left: -150px;
+    top: 150px;
+
+  }
+
+  .heroSubtitle {
+    font-size: 2rem; /* Adjust subtitle size */
+  }
+
+  .eventDate {
+    font-size: 1.5rem; /* Adjust date size */
+  }
+
+  /* Image Adjustment for Mobile */
+  .heroImageContainer {
+    max-width: 20%; /* 20% width on mobile */
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .heroImage {
+   display: none;
+  }
+}
+
+.downloadAllButton {
+  background-color: transparent;
+  z-index: 1000;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-weight: 600;
+  text-decoration: underline;
+  margin-bottom: 2rem;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.downloadAllButton:hover {
+  background-color: #0056b3;
+}
+
+
+.eventDate{
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 3rem;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Galeria Masonry - Layout Desktop */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Colunas flexíveis para desktop */
+  grid-gap: 10px;
+  width:   fit-content;
+  margin: 0 auto;
+  justify-items: center; /* Centraliza os itens horizontalmente */
+
+}
+
+/* Estilo dos itens da galeria */
+.galleryItem {
+  overflow: hidden;
+  border-radius: 8px;
+  position: relative;
+}
+
+/* Horizontal ocupa duas colunas */
+.horizontal {
+  grid-column: span 2;
+}
+
+/* Vertical ocupa uma coluna */
+.vertical {
+  grid-column: span 1;
+}
+
+/* Estilo das imagens */
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Assegura que a imagem preencha o contêiner sem distorcer */
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.image:hover {
+  transform: scale(1.3); /* Pequeno zoom ao passar o mouse */
+}
+
+
+
+.loadingContainer {
+  min-height: 5vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+}
+
+.spinnerWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.spinnerLogo {
+  width: 100px;
+  height: 100px;
+  margin-bottom: 20px;
+}
+
+.spinner {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top: 4px solid white;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+/* Animação de rotação do spinner */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Modal de Preview */
+/* Modal de Preview */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  max-width: 80%;
+  max-height: 80%;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  position: absolute;
+  top: 50px;
+  right: 150px;
+}
+
+.closeButton, .downloadButton {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 30px;
+  cursor: pointer;
+  margin-left: 1rem; /* Espaçamento entre os botões */
+}
+
+.downloadButton {
+  text-align: center;
+}
+
+.downloadIconWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.downloadIconWrapper span {
+  font-size: 12px;
+  margin-top: 4px;
+  color: white;
+}
+
+
+
+.prevButton, .nextButton {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 40px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.prevButton {
+  left: 20px;
+}
+
+.nextButton {
+  right: 20px;
+}
+
+.modalImage {
+  max-width: 80%;
+  max-height: 80%;
+  border-radius: 8px;
+  overflow: hidden;
+  object-fit: contain;
+}
+
+.downloadButton:hover, .closeButton:hover, .prevButton:hover, .nextButton:hover {
+  color: #ccc;
+}
+
+
+
+
+
+/* Elemento "sentinela" para o observer */
+.observer {
+  width: 100%;
+  height: 1px;
+  background-color: transparent;
+}
+
+@media (max-width: 1310px) {
+  .gallery {
+    grid-template-columns: repeat(4, 1fr); /* Duas colunas em telas pequenas */
+  }
+
+
+}
+
+
+
+/* Layout Mobile - Adaptação para duas verticais ou uma horizontal por linha */
+@media (max-width: 768px) {
+  .gallery {
+    grid-template-columns: repeat(2, 1fr); /* Duas colunas em telas pequenas */
+  }
+
+  .horizontal {
+    grid-column: span 2; /* Horizontal ocupa duas colunas */
+  }
+
+  .vertical {
+    grid-column: span 1; /* Vertical ocupa uma coluna */
+  }
+
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .modalContent {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    max-width: 100%;
+    max-height: 100%;
+  }
+  
+  .modalHeader {
+    display: flex;
+    justify-content: flex-end;
+    position: absolute;
+    top: 40px;
+    right: 20px;
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
