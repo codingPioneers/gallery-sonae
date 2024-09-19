@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useSwipeable } from 'react-swipeable'; // Importa o hook react-swipeable
 
 import styles from './page.module.css';
-import { ref, listAll, getDownloadURL } from 'firebase/storage';
+import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
 import { storage } from '../../firebase'; // Certifique-se de que este é o caminho correto
 import { motion } from 'framer-motion'; // Importar Framer Motion
 import JSZip from 'jszip'; // Importa JSZip para compactar os arquivos
@@ -15,6 +15,7 @@ import logo from './assets/Sonae-Logo.png'; // Importar o logo
 import bolas from './assets/BOLAS.png'
 import risca from './assets/risca.png'
 import circle from './assets/circle.png'
+import VideoPlayer from './videoPlayer';
 
 const Gallery = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -23,6 +24,7 @@ const Gallery = () => {
   const [isDownloading, setIsDownloading] = useState(false); // Estado para bloquear o botão durante o download
 
   const [images, setImages] = useState<string[]>([]);
+  const [imageLoadingStatus, setImageLoadingStatus] = useState<boolean[]>([]); // Estado para armazenar o carregamento de cada imagem
   const [currentBlock, setCurrentBlock] = useState(0);
   const [showTopLogo, setShowTopLogo] = useState(false); // Estado para controlar o logo do topo
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,8 +33,7 @@ const Gallery = () => {
   const modalRef = useRef<HTMLDivElement | null>(null); // Referência para o modal
   const router = useRouter();
   const blockSize = 12; // Definir o número de imagens por bloco
-  const [imageLoadingStatus, setImageLoadingStatus] = useState<boolean[]>([]); // Estado para armazenar o carregamento de cada imagem
-
+  const [allImagesLoaded, setAllImagesLoaded] = useState(false); // Estado para verificar se todas as imagens foram carregadas
 
   // Verificação de autenticação
   useEffect(() => {
@@ -49,25 +50,53 @@ const Gallery = () => {
     return () => unsubscribe();
   }, [router]);
 
-  useEffect(() => {
-    const fetchImages = async () => {
-      const storageRef = ref(storage, 'galeria/');
-      const res = await listAll(storageRef);
-      const imageUrls = await Promise.all(res.items.map(item => getDownloadURL(item)));
-      setImages(imageUrls);
-      // Define o estado de carregamento das imagens como verdadeiro inicialmente
-      setImageLoadingStatus(Array(imageUrls.length).fill(true));
-    };
-    fetchImages();
-  }, []);
-   // Função chamada quando uma imagem termina de carregar
-   const handleImageLoad = (index: number) => {
-    const updatedLoadingStatus = [...imageLoadingStatus];
-    updatedLoadingStatus[index] = false; // Marca a imagem como carregada
-    setImageLoadingStatus(updatedLoadingStatus);
+  // Função chamada quando uma imagem termina de carregar
+  const handleImageLoad = (index: number) => {
+    setImageLoadingStatus((prevStatus) => {
+      const newStatus = [...prevStatus];
+      newStatus[index] = false;
+      return newStatus;
+    });
   };
 
+  // Carregar as imagens em lotes (batches)
+  const fetchImagesInBatches = async (batchSize: number) => {
+    const storageRef = ref(storage, 'galeria/');
+    const res = await listAll(storageRef);
+    const totalImages = res.items.length;
+  
+    for (let i = 0; i < totalImages; i += batchSize) {
+      const batch = res.items.slice(i, i + batchSize);
+      const urls = await Promise.all(batch.map(item => getDownloadURL(item)));
+      
+      // Adicione uma verificação para garantir que as imagens não sejam duplicadas
+      setImages((prevImages) => {
+        const newImages = [...prevImages, ...urls];
+        // Filtra imagens duplicadas
+        return Array.from(new Set(newImages));
+      });
+      
+      setImageLoadingStatus((prevStatus) => [...prevStatus, ...Array(urls.length).fill(true)]);
+  
+      // Pequeno delay entre os lotes para evitar sobrecarregar o navegador
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  };
+  
 
+  useEffect(() => {
+    fetchImagesInBatches(10); // Limite o número de imagens a serem carregadas por vez
+  }, []);
+
+
+
+
+
+
+
+
+
+  
   // Função para carregar mais blocos de imagens à medida que o usuário rola
   const loadMoreImages = () => {
     if (currentBlock * blockSize >= images.length) return; // Se todas as imagens forem carregadas, não faz mais nada
@@ -75,8 +104,14 @@ const Gallery = () => {
     setTimeout(() => {
       setCurrentBlock((prevBlock) => prevBlock + 1);
       setLoading(false);
-    }, 1000); // Simula um pequeno atraso
+    }, 0); // Simula um pequeno atraso
   };
+
+
+
+
+
+
 
   // Função para observar o final da galeria e carregar mais imagens
   useEffect(() => {
@@ -95,31 +130,43 @@ const Gallery = () => {
     };
   }, [observerRef, images]);
 
-  // Função para baixar todas as imagens como ZIP
-  const downloadAllAsZip = async () => {
+
+
+
+
+
+
+
+
+
+
+  const downloadZipFromStorage = async () => {
     setIsDownloading(true); // Bloqueia o botão enquanto o download estiver em andamento
-    const zip = new JSZip();
-    const imgFolder = zip.folder('galeria-download'); 
 
     try {
-      const downloadPromises = images.map(async (imageUrl, index) => {
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
-        const fileName = `image_${index}.jpg`;
-        imgFolder?.file(fileName, blob);
-      });
+      const zipRef = ref(storage, 'galeria-ziped/gallery.zip'); // Caminho para o arquivo ZIP no Firebase Storage
+      const zipUrl = await getDownloadURL(zipRef);
 
-      await Promise.all(downloadPromises);
+      // Criar um link de download
+      const a = document.createElement('a');
+      a.href = zipUrl;
+      a.download = 'galeria.zip'; // Nome do arquivo que será baixado
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
 
-      zip.generateAsync({ type: 'blob' }).then((content) => {
-        saveAs(content, 'galeria.zip'); // Salva o arquivo ZIP
-        setIsDownloading(false); // Desbloqueia o botão após o download
-      });
+      setIsDownloading(false); // Desbloqueia o botão após o download
     } catch (error) {
-      console.error("Erro ao fazer o download do álbum:", error);
+      console.error("Erro ao fazer o download do ZIP:", error);
       setIsDownloading(false); // Desbloqueia o botão em caso de erro
     }
   };
+
+
+
+
+
+
 
   // Função para abrir a preview de uma imagem
   const openModal = (index: number) => {
@@ -154,31 +201,71 @@ const Gallery = () => {
     trackTouch: true,
   });
 
-  // Função para definir se uma imagem é horizontal ou vertical
-  const isHorizontal = (width: number, height: number) => width > height;
 
-  // Função para baixar a imagem como Blob
+  // Adicione um efeito para capturar eventos de teclado
+useEffect(() => {
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (isModalOpen) {
+      if (event.key === 'ArrowRight') {
+        goToNextImage(); // Próxima imagem
+      } else if (event.key === 'ArrowLeft') {
+        goToPreviousImage(); // Imagem anterior
+      } else if (event.key === 'Escape') {
+        closeModal(); // Fechar modal com 'Esc'
+      }
+    }
+  };
+
+  // Adiciona o event listener quando o modal é aberto
+  if (isModalOpen) {
+    window.addEventListener('keydown', handleKeyDown);
+  }
+
+  // Remove o event listener quando o modal é fechado
+  return () => {
+    window.removeEventListener('keydown', handleKeyDown);
+  };
+}, [isModalOpen, currentImageIndex]); // Reexecuta quando o modal é aberto ou fechado
+
+
+
+
   const downloadImage = async () => {
     if (currentImageIndex !== null) {
       const imageUrl = images[currentImageIndex];
       try {
-        const response = await fetch(imageUrl);
+        // Extrai o nome do arquivo da URL sem o caminho completo, removendo "galeria/" se presente
+        const fullPath = decodeURIComponent(imageUrl.substring(imageUrl.lastIndexOf('/') + 1).split('?')[0]);
+        const imageName = fullPath.replace('galeria/', ''); // Remove qualquer "galeria/" do caminho
+  
+        // Cria uma referência para a mesma imagem na pasta correta de alta qualidade
+        const highQualityRef = ref(storage, `galeria-download/${imageName}`);
+  
+        // Obtém a URL de download da imagem em alta qualidade
+        const highQualityUrl = await getDownloadURL(highQualityRef);
+  
+        // Faz o download da imagem em alta qualidade
+        const response = await fetch(highQualityUrl);
         const blob = await response.blob();
         const blobUrl = window.URL.createObjectURL(blob);
-
+  
+        // Cria um link temporário para download
         const a = document.createElement('a');
         a.href = blobUrl;
-        a.download = `image_${currentImageIndex}.jpg`; // Nome do arquivo para download
+        a.download = imageName; // Usar o mesmo nome de arquivo
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-
+  
+        // Revoga o URL temporário
         window.URL.revokeObjectURL(blobUrl);
       } catch (error) {
-        console.error("Erro ao fazer o download da imagem:", error);
+        console.error("Erro ao fazer o download da imagem de alta qualidade:", error);
       }
     }
   };
+  
+  
 
   const imagesToDisplay = images.slice(0, (currentBlock + 1) * blockSize);
 
@@ -192,111 +279,146 @@ const Gallery = () => {
   if (loadingAuth) {
     return (
       <div className={styles.loadingContainer}>
-        <div className={styles.spinnerWrapper}>
-          <img src={logo.src} alt="Sonae Logo" className={styles.spinnerLogo} />
-        </div>
+      <div className={styles.spinnerWrapper}>
+        <motion.img
+          src={logo.src}
+          alt="Sonae Logo"
+          className={styles.spinnerLogo}
+          initial={{ opacity: 0, y: -50 }} // Inicialmente invisível e levemente acima
+          animate={{ opacity: 1, y: 0 }}   // Fica visível e se move para a posição original
+          exit={{ opacity: 0, y: 50 }}     // Ao sair, fica invisível e move para baixo
+          transition={{ duration: 3 }}     // Duração da animação de 3 segundos
+        />
       </div>
+    </div>
     );
   }
+
 
   return (
     <div className={styles.background}>
       {/* Logo do topo que agora é o logo grande (do loading) */}
       <div className={styles.heroSection}>
-  {/* Círculo grande de fundo com animação */}
-  <motion.img
-    src={circle.src}
-    alt="Sonae Logo"
-    className={styles.circle1}
-    initial={{ opacity: 0, rotate: -90 }}
-    animate={{ opacity: 1, rotate: 0 }}
-    transition={{ duration: 1.5, delay: 0.3 }}
-  />
+        {/* Círculo grande de fundo com animação */}
+        <motion.img
+          src={circle.src}
+          alt="Sonae Logo"
+          className={styles.circle1}
+          initial={{ opacity: 0, rotate: -90 }}
+          animate={{ opacity: 1, rotate: 0 }}
+          transition={{ duration: 1.5, delay: 0.3 }}
+        />
 
-  {/* Coluna Esquerda: Logo e Texto */}
-  <motion.div
-    className={styles.heroContent}
-    initial={{ opacity: 0, x: -100 }}
-    animate={{ opacity: 1, x: 0 }}
-    transition={{ duration: 1, delay: 0.5 }}
-  >
-    <motion.img
-      src={logo.src}
-      alt="Sonae Logo"
-      className={styles.heroLogo}
-      initial={{ opacity: 0, y: -50 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 1, delay: 0.7 }}
-    />
+        {/* Coluna Esquerda: Logo e Texto */}
+        <motion.div
+          className={styles.heroContent}
+          initial={{ opacity: 0, x: -100 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1, delay: 0.5 }}
+        >
+          <motion.img
+            src={logo.src}
+            alt="Sonae Logo"
+            className={styles.heroLogo}
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.7 }}
+          />
 
+          <motion.div
+            className={styles.textContainer}
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, delay: 0.9 }}
+          >
+            <p className={styles.heroSubtitle}>Shaping our culture</p>
+
+            <motion.img
+              src={risca.src}
+              alt="Sonae Risca"
+              className={styles.risca}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, delay: 1 }}
+            />
+
+            <p className={styles.eventDate}>16 & 17 September</p>
+            <motion.button
+              className={styles.downloadAllButton}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 1.2 }}
+              onClick={downloadZipFromStorage}
+              disabled={isDownloading} // Desabilita o botão durante o download
+            >
+              {isDownloading ? 'A descarregar...' : 'Descarregar álbum'}
+            </motion.button>
+
+          </motion.div>
+        </motion.div>
+
+        {/* Coluna Direita: Imagem de Bolas com Círculo */}
+        <motion.div
+          className={styles.heroImageContainer}
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1, delay: 1.2 }}
+        >
+          <motion.img
+            src={bolas.src}
+            alt="Event Graphic"
+            className={styles.heroImage}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 1.4 }}
+          />
+
+          <motion.img
+            src={circle.src}
+            alt="Sonae Circle"
+            className={styles.circle}
+            initial={{ opacity: 0, rotate: -180 }}
+            animate={{ opacity: 1, rotate: 0 }}
+            transition={{ duration: 1, delay: 1.6 }}
+          />
+        </motion.div>
+
+
+      </div>
+
+
+
+
+
+
+
+    <div className={styles.videoSection}>
     <motion.div
-      className={styles.textContainer}
-      initial={{ opacity: 0, x: -50 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 1, delay: 0.9 }}
-    >
-      <p className={styles.heroSubtitle}>Event Photos</p>
+    initial={{ opacity: 0, scale: 0.8 }} // Começa com opacidade 0 e menor escala
+    animate={{ opacity: 1, scale: 1 }}   // Anima para opacidade 1 e escala normal
+    transition={{  duration: 2, delay:2 }}       // Duração da animação de 1.5 segundos
+    style={{ width: '100%' }} // Assegura que o div tenha 100% de largura
 
-      <motion.img
-        src={risca.src}
-        alt="Sonae Risca"
-        className={styles.risca}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1, delay: 1 }}
-      />
-
-      <p className={styles.eventDate}>16 & 17 September</p>
-      <motion.button
-        className={styles.downloadAllButton}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, delay: 1.2 }}
-        onClick={downloadAllAsZip}
-        disabled={isDownloading} // Desabilita o botão durante o download
-      >
-        {isDownloading ? 'A descarregar...' : 'Descarregar álbum'}
-      </motion.button>
-
-    </motion.div>
-  </motion.div>
-
-  {/* Coluna Direita: Imagem de Bolas com Círculo */}
-  <motion.div
-    className={styles.heroImageContainer}
-    initial={{ opacity: 0, x: 100 }}
-    animate={{ opacity: 1, x: 0 }}
-    transition={{ duration: 1, delay: 1.2 }}
   >
-    <motion.img
-      src={bolas.src}
-      alt="Event Graphic"
-      className={styles.heroImage}
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 1, delay: 1.4 }}
-    />
+    <VideoPlayer/>
+    </motion.div>
 
-    <motion.img
-      src={circle.src}
-      alt="Sonae Circle"
-      className={styles.circle}
-      initial={{ opacity: 0, rotate: -180 }}
-      animate={{ opacity: 1, rotate: 0 }}
-      transition={{ duration: 1, delay: 1.6 }}
-    />
-  </motion.div>
-</div>
+    </div>
 
 
-      <div className={styles.gallery}>
+
+
+
+
+
+     <div className={styles.gallery}>
         {imagesToDisplay.map((image, index) => (
           <motion.div
             key={index}
-            className={`${styles.galleryItem}`}
+            className={styles.galleryItem}
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.2 }}
+            transition={{ duration: 0.5, delay:0 }}
             onClick={() => openModal(index)} // Abre o modal ao clicar
           >
             <img
@@ -309,11 +431,17 @@ const Gallery = () => {
               decoding="async"
               onLoad={(e) => {
                 const imgElement = e.currentTarget;
-                if (isHorizontal(imgElement.naturalWidth, imgElement.naturalHeight)) {
+                const isHorizontal = imgElement.naturalWidth > imgElement.naturalHeight;
+
+                // Aplica a classe CSS baseada na orientação da imagem
+                if (isHorizontal) {
                   imgElement.parentElement?.classList.add(styles.horizontal); // Horizontal ocupa duas colunas
                 } else {
                   imgElement.parentElement?.classList.add(styles.vertical); // Vertical ocupa uma coluna
                 }
+
+                // Marca a imagem como carregada
+                handleImageLoad(index);
               }}
             />
           </motion.div>
@@ -328,6 +456,18 @@ const Gallery = () => {
           <div className={styles.loader}></div>
         </div>
       )}
+
+
+
+
+
+
+
+
+
+
+
+
 
       {/* Modal de preview */}
       {isModalOpen && currentImageIndex !== null && (
