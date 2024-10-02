@@ -4,6 +4,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import { getAuth, onAuthStateChanged, User } from "firebase/auth"; // Importe o tipo `User`
 import { useRouter } from 'next/navigation';
 import { useSwipeable } from 'react-swipeable'; // Importa o hook react-swipeable
+import { usePathname } from "next/navigation"; // Para saber a página atual
+import Link from "next/link";
+import { useMediaQuery } from '@mui/material';
 
 import styles from './page.module.css';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
@@ -16,6 +19,7 @@ import bolas from './assets/BOLAS.png'
 import risca from './assets/risca.png'
 import circle from './assets/circle.png'
 import VideoPlayer from './videoPlayer';
+import Navbar from './global/Navbar';
 
 const Gallery = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -34,6 +38,10 @@ const Gallery = () => {
   const router = useRouter();
   const blockSize = 12; // Definir o número de imagens por bloco
   const [allImagesLoaded, setAllImagesLoaded] = useState(false); // Estado para verificar se todas as imagens foram carregadas
+  const [isVisible, setIsVisible] = useState(false); // Controla a visibilidade da barra
+  const pathname = usePathname(); // Identifica a página atual
+  const isSmallScreen = useMediaQuery('(max-width: 768px)');
+
 
   // Verificação de autenticação
   useEffect(() => {
@@ -49,6 +57,15 @@ const Gallery = () => {
 
     return () => unsubscribe();
   }, [router]);
+
+  useEffect(() => {
+    // Mostra a barra de navegação após 3 segundos
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Função chamada quando uma imagem termina de carregar
   const handleImageLoad = (index: number) => {
@@ -267,6 +284,63 @@ useEffect(() => {
   
   
 
+  const [videoDownloadUrl, setVideoDownloadUrl] = useState<string | null>(null); // URL para o download do vídeo
+  const [isVideoDownloading, setIsVideoDownloading] = useState(false); // Estado para indicar se o vídeo está sendo baixado
+  const [videoDownloadProgress, setVideoDownloadProgress] = useState(0); // Progresso do download do vídeo
+  const [isVideoLoading, setIsVideoLoading] = useState(true); // Estado para indicar se o vídeo está carregando
+  
+  useEffect(() => {
+    const fetchVideo = async () => {
+      try {
+        const videoRef = ref(storage, 'video-ziped/video.mov.zip'); // Caminho do vídeo no Firebase Storage
+        const url = await getDownloadURL(videoRef);
+        setVideoDownloadUrl(url); // Guarda a URL do vídeo no estado
+      } catch (error) {
+        console.error("Erro ao buscar o vídeo:", error);
+      } finally {
+        setIsVideoLoading(false); // O vídeo terminou de carregar
+      }
+    };
+  
+    fetchVideo();
+  }, []);
+  
+  const handleDownloadVideo = async () => {
+    setIsDownloading(true); // Bloqueia o botão enquanto o download estiver em andamento
+
+    try {
+      const zipRef = ref(storage, 'video-ziped/video.mov.zip'); // Caminho para o arquivo ZIP no Firebase Storage
+      const zipUrl = await getDownloadURL(zipRef);
+
+      // Criar um link de download
+      const a = document.createElement('a');
+      a.href = zipUrl;
+      a.download = 'video.zip'; // Nome do arquivo que será baixado
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      setIsDownloading(false); // Desbloqueia o botão após o download
+    } catch (error) {
+      console.error("Erro ao fazer o download do ZIP:", error);
+      setIsDownloading(false); // Desbloqueia o botão em caso de erro
+    }
+  };
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const imagesToDisplay = images.slice(0, (currentBlock + 1) * blockSize);
 
   // Função de ref callback para combinar refs
@@ -295,9 +369,35 @@ useEffect(() => {
   }
 
 
+
+
+
+
   return (
     <div className={styles.background}>
-      {/* Logo do topo que agora é o logo grande (do loading) */}
+
+{isVisible && (
+        <motion.nav
+          style={navStyle}
+          initial={{ opacity: 0, y: -50 }} // Começa invisível e deslocada para cima
+          animate={{ opacity: 1, y: 0 }} // Suavemente se torna visível e desloca para a posição correta
+          transition={{ duration: 1 }} // Controle da duração da animação (1 segundo)
+        >
+          <ul style={navListStyle}>
+            <li style={navItemStyle}>
+              <Link href="/" style={pathname === "/" ? navLinkActiveStyle : navLinkStyle}>
+                Galeria
+              </Link>
+            </li>
+            <li style={navItemStyle}>
+              <Link href="/palestras" style={pathname === "/palestras" ? navLinkActiveStyle : navLinkStyle}>
+                Palestras
+              </Link>
+            </li>
+          </ul>
+        </motion.nav>
+      )}
+
       <div className={styles.heroSection}>
         {/* Círculo grande de fundo com animação */}
         <motion.img
@@ -354,6 +454,23 @@ useEffect(() => {
               {isDownloading ? 'A descarregar...' : 'Descarregar álbum'}
             </motion.button>
 
+{/* Botão para baixar o vídeo */}
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 1.2, ease: "easeInOut", delay: 1.0 }}
+  className={styles.additionalDownloadContainer}
+>
+  <button onClick={handleDownloadVideo} id={styles.downloadVideo}>
+    {isVideoDownloading ? `A descarregar... (${videoDownloadProgress}%)` : 'Descarregar vídeo'}
+  </button>
+</motion.div>
+
+
+
+
+
+
           </motion.div>
         </motion.div>
 
@@ -397,8 +514,7 @@ useEffect(() => {
     initial={{ opacity: 0, scale: 0.8 }} // Começa com opacidade 0 e menor escala
     animate={{ opacity: 1, scale: 1 }}   // Anima para opacidade 1 e escala normal
     transition={{  duration: 2, delay:2 }}       // Duração da animação de 1.5 segundos
-    style={{ width: '100%' }} // Assegura que o div tenha 100% de largura
-
+    style={{ width: isSmallScreen ? '100%' : '90%', zIndex:'1' }}
   >
     <VideoPlayer/>
     </motion.div>
@@ -507,3 +623,43 @@ useEffect(() => {
 };
 
 export default Gallery;
+
+
+
+// Estilos da barra de navegação
+const navStyle = {
+  backgroundColor: "transparent",
+  padding: "10px",
+  color: "white",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  height: "60px",
+  fontWeight: "600",
+};
+
+const navListStyle = {
+  listStyle: "none",
+  display: "flex",
+  justifyContent: "center",
+  margin: 0,
+  padding: 0,
+};
+
+const navItemStyle = {
+  display: "inline",
+  margin: "0 20px",
+};
+
+const navLinkStyle = {
+  color: "white",
+  textDecoration: "none",
+  fontSize: "18px",
+  padding: "10px 20px",
+  fontWeight: "bold",
+};
+
+const navLinkActiveStyle = {
+  ...navLinkStyle,
+  textDecoration: "underline",
+};

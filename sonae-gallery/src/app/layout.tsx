@@ -16,6 +16,9 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Event Photos",
   description: "Galeria do evento Sonae",
+  icons:{
+    icon:['/icon.png']
+  }
 };
 
 export default function RootLayout({
@@ -25,8 +28,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+      <link rel="icon" href="/icon.png" sizes="64x64" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-      <link rel="icon" href="/assets/Sonae-Logo.png" /> {/* Refere-se ao favicon */}
 
         {children}
       </body>

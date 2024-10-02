@@ -53,7 +53,7 @@ const Login = () => {
         animate={{ opacity: 1, rotate: 0 }}
         transition={{ duration: 2 }}
       >
-        <img src={circle.src} alt="Circle" className={styles.circle} />
+       {/** <img src={circle.src} alt="Circle" className={styles.circle} /> */}
 
         <div className={styles.centerContainer}>
           {/* Animação suave para o logotipo */}

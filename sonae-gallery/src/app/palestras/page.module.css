@@ -1,0 +1,237 @@
+/* Estilo para o fundo do site */
+.background {
+  
+    min-height: 100vh;
+    margin: 0 auto;
+    width: 90%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    
+  }
+  
+  .circle, .circle1{
+    display: none;
+  }
+  
+  .risca{
+    height: 20px;
+    padding: -3px 0;
+  }
+  
+  .heroSection {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 50px 80px;
+    background-color: #000e63;
+    height: 70vh;
+    position: relative; /* Make the section positioning relative */
+  }
+  
+  /* Left Content (60% for desktop, 100% for mobile) */
+  .heroContent {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 60%; /* 60% width for desktop */
+    z-index: 2; /* Ensure content stays above the background image */
+  }
+  
+  /* Text and Logo Styling */
+  .heroLogo {
+    width: 110%; /* Adjust this value according to the logo size */
+    height: auto;
+    margin-bottom: 20px;
+  }
+  
+  .textContainer {
+    color: white;
+  }
+  
+  .heroSubtitle {
+    font-size: 2rem;
+    font-weight: bolder;
+    margin: 10px 0;
+  }
+  
+  
+  
+  /* Right Image (40% for desktop, 20% for mobile) */
+  .heroImageContainer {
+    position: absolute; /* Position the image absolutely */
+    top: 0;
+    right: 0;
+    bottom: 0;
+  }
+  
+  .heroImage {
+    max-height: 100vh; /* Ensure the image takes the full height */
+    width: auto;
+    margin-right: -10rem;
+  }
+  /* Mobile Adjustments */
+  @media (max-width: 950px) {
+  
+    .background{
+      width: 100%;
+    }
+  
+    .heroSection {
+      flex-direction: column;
+      justify-content: center;
+      padding: 20px 0px;
+      height: auto; /* Adjust height based on content */
+    }
+  
+    .heroContent {
+      max-width: 100%; /* Full width on mobile */
+      text-align: center; /* Center text */
+      align-items: center;
+    }
+  
+    .heroLogo {
+      width: 60%; /* Smaller logo for mobile */
+      margin-bottom: 15px;
+    }
+  
+    .textContainer {
+      margin-top: 20px;
+    }
+  
+    .circle{
+      display: block;
+      position: absolute;
+      width: 250px;
+      right: -150px;
+      top: -150px;
+  
+    }
+  
+    .circle1{
+      display: block;
+      position: absolute;
+      width: 250px;
+      left: -150px;
+      top: 150px;
+  
+    }
+  
+    .heroSubtitle {
+      font-size: 2rem; /* Adjust subtitle size */
+    }
+  
+    .eventDate {
+      font-size: 1.5rem; /* Adjust date size */
+    }
+  
+    /* Image Adjustment for Mobile */
+    .heroImageContainer {
+      max-width: 20%; /* 20% width on mobile */
+      justify-content: center;
+      margin-top: 20px;
+    }
+  
+    .heroImage {
+     display: none;
+    }
+  }
+
+
+
+
+/* Estilos para o botão de "Descarregar vídeo" */
+#downloadVideo {
+    display: none;
+    background-color: transparent;
+    z-index: 1000;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: 600;
+    text-decoration: underline;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    align-items: center;
+    margin: 0 auto; /* Centraliza o botão horizontalmente */
+  }
+  
+  #downloadVideo:hover {
+    background-color: #0056b3;
+  }
+  
+  .eventDate{
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 3rem;
+  }
+  
+  
+  
+
+
+
+
+
+    .videoList {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); /* 3 colunas em telas grandes */
+      gap: 1.5rem; /* Espaçamento entre vídeos */
+      width: 100%;
+      z-index: 2;
+    }
+    
+    /* Para ecrãs menores (menos de 950px) */
+    @media (max-width: 950px) {
+      .videoList {
+        grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas menores */
+      }
+    }
+    
+    /* Para ecrãs muito pequenos (exemplo, menos de 768px) */
+    @media (max-width: 768px) {
+      .videoList {
+        grid-template-columns: 1fr; /* 1 coluna em telas muito pequenas */
+      }
+    }
+    
+    .videoItem {
+      z-index: 100;
+      overflow: hidden; /* Para garantir que a borda esteja correta */
+    }
+    
+    .videoPlayer {
+      width: 100%;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+    
+    .videoInfo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.5rem;
+      margin-bottom: 3rem;
+      width: 100%; /* Ajuste da largura para o grid */
+    }
+    
+    .leftSection h1 {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin: 0;
+      color: white;
+    }
+    
+    .subtitle {
+      font-size: 1rem;
+      font-weight: 300;
+      margin-top: 5px;
+      color: white;
+    }
+    

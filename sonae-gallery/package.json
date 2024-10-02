@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@mui/material": "^6.1.1",
     "file-saver": "^2.0.5",
     "firebase": "^10.13.1",
     "framer-motion": "^11.5.4",
@@ -16,6 +19,7 @@
     "next": "14.2.11",
     "react": "^18",
     "react-dom": "^18",
+    "react-router-dom": "^6.26.2",
     "react-swipeable": "^7.0.1"
   },
   "devDependencies": {

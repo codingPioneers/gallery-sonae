@@ -149,7 +149,6 @@
   border-radius: 5px;
   font-weight: 600;
   text-decoration: underline;
-  margin-bottom: 2rem;
   font-size: 14px;
   cursor: pointer;
   transition: background-color 0.3s ease;
@@ -159,6 +158,28 @@
   background-color: #0056b3;
 }
 
+
+/* Estilos para o botão de "Descarregar vídeo" */
+#downloadVideo {
+  display: none;
+  background-color: transparent;
+  z-index: 1000;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-weight: 600;
+  text-decoration: underline;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  align-items: center;
+  margin: 0 auto; /* Centraliza o botão horizontalmente */
+}
+
+#downloadVideo:hover {
+  background-color: #0056b3;
+}
 
 .eventDate{
   color: #ffffff;
@@ -396,6 +417,12 @@
 
 /* Layout Mobile - Adaptação para duas verticais ou uma horizontal por linha */
 @media (max-width: 768px) {
+
+  
+  #downloadVideo {
+    display: block;
+    }
+  
   .gallery {
     width: 100%;
     grid-template-columns: repeat(2, 1fr); /* Duas colunas em telas pequenas */
@@ -441,18 +468,36 @@
     right: 20px;
   }
 
+
 }
 
 
 
+.videoSection {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 
+.videoSection {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 
-.videoSection{
-width: 100%;
-height: auto;
-display: flex;
-align-items: center;
-justify-content: center;
+.videoPlayer {
+  width: 100%;
+  height: auto;
+  max-width: 100%; /* Garante que não ultrapasse a largura da tela */
+  aspect-ratio: 16/9; /* Define a proporção 16:9 para vídeos */
+  border-radius: 8px; /* Exemplo de bordas arredondadas */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); /* Sombra ao redor do vídeo */
 }
 
 .videoContainer {
@@ -460,19 +505,41 @@ justify-content: center;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 3rem;
-}
-.videoPlayer {
-  z-index: 100;
-  width: 90%; /* O vídeo agora vai ocupar 100% da largura do .videoContainer */
-  border-radius: 8px;
-  object-fit: cover; /* Ajusta o vídeo para preencher o container sem distorção */
+  margin: 20px 0; /* Espaçamento em torno do player */
 }
 
-@media (max-width: 768px) {
+
+.downloadLink {
+  background-color: transparent;
+  z-index: 1000;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-weight: 600;
+  text-decoration: underline;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  
+}
+
+@media (min-width: 768px) {
+
+ 
 
 
   .videoPlayer {
-    width: 100%; /* Responsividade para telas menores */
+   
+    width: 100%;
+
+  
   }
+
+
+  
+
+       
+ 
+
 }
