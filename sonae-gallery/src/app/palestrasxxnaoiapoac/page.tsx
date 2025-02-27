@@ -60,13 +60,13 @@ const videoData = [
   },
   {
     url: "https://www.youtube.com/embed/uStJUFOGUWI?list=PLLnBG4u93eKIY0QbTHxn-panFBTIVJPpP",
-    speaker: "BPM Project",
-    subtitle: "Stations People Performance Management"
+    speaker: "Miguel Tolentino",
+    subtitle: "PPM System - part 1"
   },
   {
     url: "https://www.youtube.com/embed/gyGgNAi2v80?list=PLLnBG4u93eKIY0QbTHxn-panFBTIVJPpP",
     speaker: "Miguel Tolentino",
-    subtitle: "PPM System"
+    subtitle: "PPM System - part 2"
   },
   {
     url: "https://www.youtube.com/embed/40aCIz3eBik?list=PLLnBG4u93eKIY0QbTHxn-panFBTIVJPpP",

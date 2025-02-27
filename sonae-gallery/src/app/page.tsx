@@ -63,7 +63,7 @@ const Gallery = () => {
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 3000);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -78,28 +78,39 @@ const Gallery = () => {
 
   // Carregar as imagens em lotes (batches)
   const fetchImagesInBatches = async (batchSize: number) => {
-    const storageRef = ref(storage, 'galeria/');
-    const res = await listAll(storageRef);
-    const totalImages = res.items.length;
-  
-    for (let i = 0; i < totalImages; i += batchSize) {
-      const batch = res.items.slice(i, i + batchSize);
-      const urls = await Promise.all(batch.map(item => getDownloadURL(item)));
-      
-      // Adicione uma verificação para garantir que as imagens não sejam duplicadas
-      setImages((prevImages) => {
-        const newImages = [...prevImages, ...urls];
-        // Filtra imagens duplicadas
-        return Array.from(new Set(newImages));
-      });
-      
-      setImageLoadingStatus((prevStatus) => [...prevStatus, ...Array(urls.length).fill(true)]);
-  
-      // Pequeno delay entre os lotes para evitar sobrecarregar o navegador
-      await new Promise((resolve) => setTimeout(resolve, 100));
+    const folders = ['galeria/Day 1', 'galeria/Day 2']; // Add more folders as needed
+    let allImages: string[] = [];
+
+    for (const folder of folders) {
+      const storageRef = ref(storage, folder);
+      const res = await listAll(storageRef);
+      const totalImages = res.items.length;
+
+      for (let i = 0; i < totalImages; i += batchSize) {
+        const batch = res.items.slice(i, i + batchSize);
+        const urls = await Promise.all(batch.map(item => getDownloadURL(item)));
+
+        allImages = [...allImages, ...urls];
+
+        setImageLoadingStatus((prevStatus) => [...prevStatus, ...Array(urls.length).fill(true)]);
+
+        // Delay to avoid overloading
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
     }
+
+    // Remove duplicates and update state
+    setImages((prevImages) => {
+      const newImages = allImages.filter(url => !prevImages.includes(url));
+      return [...prevImages, ...newImages];
+    });
+
+    setAllImagesLoaded(true);
+
+
   };
-  
+
+
 
   useEffect(() => {
     fetchImagesInBatches(10); // Limite o número de imagens a serem carregadas por vez
@@ -113,7 +124,7 @@ const Gallery = () => {
 
 
 
-  
+
   // Função para carregar mais blocos de imagens à medida que o usuário rola
   const loadMoreImages = () => {
     if (currentBlock * blockSize >= images.length) return; // Se todas as imagens forem carregadas, não faz mais nada
@@ -151,7 +162,7 @@ const Gallery = () => {
 
 
 
-
+ 
 
 
 
@@ -220,29 +231,29 @@ const Gallery = () => {
 
 
   // Adicione um efeito para capturar eventos de teclado
-useEffect(() => {
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (isModalOpen) {
-      if (event.key === 'ArrowRight') {
-        goToNextImage(); // Próxima imagem
-      } else if (event.key === 'ArrowLeft') {
-        goToPreviousImage(); // Imagem anterior
-      } else if (event.key === 'Escape') {
-        closeModal(); // Fechar modal com 'Esc'
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (isModalOpen) {
+        if (event.key === 'ArrowRight') {
+          goToNextImage(); // Próxima imagem
+        } else if (event.key === 'ArrowLeft') {
+          goToPreviousImage(); // Imagem anterior
+        } else if (event.key === 'Escape') {
+          closeModal(); // Fechar modal com 'Esc'
+        }
       }
+    };
+
+    // Adiciona o event listener quando o modal é aberto
+    if (isModalOpen) {
+      window.addEventListener('keydown', handleKeyDown);
     }
-  };
 
-  // Adiciona o event listener quando o modal é aberto
-  if (isModalOpen) {
-    window.addEventListener('keydown', handleKeyDown);
-  }
-
-  // Remove o event listener quando o modal é fechado
-  return () => {
-    window.removeEventListener('keydown', handleKeyDown);
-  };
-}, [isModalOpen, currentImageIndex]); // Reexecuta quando o modal é aberto ou fechado
+    // Remove o event listener quando o modal é fechado
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isModalOpen, currentImageIndex]); // Reexecuta quando o modal é aberto ou fechado
 
 
 
@@ -254,18 +265,18 @@ useEffect(() => {
         // Extrai o nome do arquivo da URL sem o caminho completo, removendo "galeria/" se presente
         const fullPath = decodeURIComponent(imageUrl.substring(imageUrl.lastIndexOf('/') + 1).split('?')[0]);
         const imageName = fullPath.replace('galeria/', ''); // Remove qualquer "galeria/" do caminho
-  
+
         // Cria uma referência para a mesma imagem na pasta correta de alta qualidade
         const highQualityRef = ref(storage, `galeria-download/${imageName}`);
-  
+
         // Obtém a URL de download da imagem em alta qualidade
         const highQualityUrl = await getDownloadURL(highQualityRef);
-  
+
         // Faz o download da imagem em alta qualidade
         const response = await fetch(highQualityUrl);
         const blob = await response.blob();
         const blobUrl = window.URL.createObjectURL(blob);
-  
+
         // Cria um link temporário para download
         const a = document.createElement('a');
         a.href = blobUrl;
@@ -273,7 +284,7 @@ useEffect(() => {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-  
+
         // Revoga o URL temporário
         window.URL.revokeObjectURL(blobUrl);
       } catch (error) {
@@ -281,14 +292,14 @@ useEffect(() => {
       }
     }
   };
-  
-  
+
+
 
   const [videoDownloadUrl, setVideoDownloadUrl] = useState<string | null>(null); // URL para o download do vídeo
   const [isVideoDownloading, setIsVideoDownloading] = useState(false); // Estado para indicar se o vídeo está sendo baixado
   const [videoDownloadProgress, setVideoDownloadProgress] = useState(0); // Progresso do download do vídeo
   const [isVideoLoading, setIsVideoLoading] = useState(true); // Estado para indicar se o vídeo está carregando
-  
+
   useEffect(() => {
     const fetchVideo = async () => {
       try {
@@ -301,10 +312,10 @@ useEffect(() => {
         setIsVideoLoading(false); // O vídeo terminou de carregar
       }
     };
-  
+
     fetchVideo();
   }, []);
-  
+
   const handleDownloadVideo = async () => {
     setIsDownloading(true); // Bloqueia o botão enquanto o download estiver em andamento
 
@@ -326,7 +337,7 @@ useEffect(() => {
       setIsDownloading(false); // Desbloqueia o botão em caso de erro
     }
   };
-  
+
 
 
 
@@ -353,18 +364,18 @@ useEffect(() => {
   if (loadingAuth) {
     return (
       <div className={styles.loadingContainer}>
-      <div className={styles.spinnerWrapper}>
-        <motion.img
-          src={logo.src}
-          alt="Sonae Logo"
-          className={styles.spinnerLogo}
-          initial={{ opacity: 0, y: -50 }} // Inicialmente invisível e levemente acima
-          animate={{ opacity: 1, y: 0 }}   // Fica visível e se move para a posição original
-          exit={{ opacity: 0, y: 50 }}     // Ao sair, fica invisível e move para baixo
-          transition={{ duration: 3 }}     // Duração da animação de 3 segundos
-        />
+        <div className={styles.spinnerWrapper}>
+          <motion.img
+            src={logo.src}
+            alt="Sonae Logo"
+            className={styles.spinnerLogo}
+            initial={{ opacity: 0, y: -50 }} // Inicialmente invisível e levemente acima
+            animate={{ opacity: 1, y: 0 }}   // Fica visível e se move para a posição original
+            exit={{ opacity: 0, y: 50 }}     // Ao sair, fica invisível e move para baixo
+            transition={{ duration: 3 }}     // Duração da animação de 3 segundos
+          />
+        </div>
       </div>
-    </div>
     );
   }
 
@@ -376,13 +387,16 @@ useEffect(() => {
   return (
     <div className={styles.background}>
 
-{isVisible && (
+
+      {/*
+      {isVisible && (
         <motion.nav
           style={navStyle}
           initial={{ opacity: 0, y: -50 }} // Começa invisível e deslocada para cima
           animate={{ opacity: 1, y: 0 }} // Suavemente se torna visível e desloca para a posição correta
           transition={{ duration: 1 }} // Controle da duração da animação (1 segundo)
         >
+                 
           <ul style={navListStyle}>
             <li style={navItemStyle}>
               <Link href="/" style={pathname === "/" ? navLinkActiveStyle : navLinkStyle}>
@@ -395,8 +409,10 @@ useEffect(() => {
               </Link>
             </li>
           </ul>
+         
         </motion.nav>
       )}
+        */}
 
       <div className={styles.heroSection}>
         {/* Círculo grande de fundo com animação */}
@@ -442,7 +458,7 @@ useEffect(() => {
               transition={{ duration: 1, delay: 1 }}
             />
 
-            <p className={styles.eventDate}>16 & 17 September</p>
+            <p className={styles.eventDate}>20 & 21 February 2025</p>
             <motion.button
               className={styles.downloadAllButton}
               initial={{ opacity: 0, y: 20 }}
@@ -454,17 +470,17 @@ useEffect(() => {
               {isDownloading ? 'A descarregar...' : 'Descarregar álbum'}
             </motion.button>
 
-{/* Botão para baixar o vídeo */}
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 1.2, ease: "easeInOut", delay: 1.0 }}
-  className={styles.additionalDownloadContainer}
->
-  <button onClick={handleDownloadVideo} id={styles.downloadVideo}>
-    {isVideoDownloading ? `A descarregar... (${videoDownloadProgress}%)` : 'Descarregar vídeo'}
-  </button>
-</motion.div>
+            {/* Botão para baixar o vídeo */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.2, ease: "easeInOut", delay: 1.0 }}
+              className={styles.additionalDownloadContainer}
+            >
+              <button onClick={handleDownloadVideo} id={styles.downloadVideo}>
+                {isVideoDownloading ? `A descarregar... (${videoDownloadProgress}%)` : 'Descarregar vídeo'}
+              </button>
+            </motion.div>
 
 
 
@@ -509,32 +525,74 @@ useEffect(() => {
 
 
 
-    <div className={styles.videoSection}>
-    <motion.div
-    initial={{ opacity: 0, scale: 0.8 }} // Começa com opacidade 0 e menor escala
-    animate={{ opacity: 1, scale: 1 }}   // Anima para opacidade 1 e escala normal
-    transition={{  duration: 2, delay:2 }}       // Duração da animação de 1.5 segundos
-    style={{ width: isSmallScreen ? '100%' : '90%', zIndex:'1' }}
-  >
-    <VideoPlayer/>
-    </motion.div>
+      <div className={styles.videoSection}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }} // Começa com opacidade 0 e menor escala
+          animate={{ opacity: 1, scale: 1 }}   // Anima para opacidade 1 e escala normal
+          transition={{ duration: 2, delay: 2 }}       // Duração da animação de 1.5 segundos
+          style={{ width: isSmallScreen ? '100%' : '90%', zIndex: '1' }}
+        >
+          <VideoPlayer />
+        </motion.div>
 
-    </div>
-
-
+      </div>
 
 
 
 
+     {/* Spinner while images load */}
+     {!allImagesLoaded && (
+        <>
+          {/* The keyframes style */}
+          <style>
+            {`
+              @keyframes spin {
+                0% {
+                  transform: rotate(0deg);
+                }
+                100% {
+                  transform: rotate(360deg);
+                }
+              }
+            `}
+          </style>
+          <div
+            style={{
+              position: "relative",
+              top: "0",
+              left: "0",
+              right: "0",
+              bottom: "0",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: "1000",
+            }}
+          >
+            <div
+              style={{
+                border: "8px solid #f3f3f3", /* Light gray */
+                borderTop: "8px solid #3498db", /* Blue */
+                borderRadius: "50%",
+                width: "50px",
+                height: "50px",
+                animation: "spin 2s linear infinite",
+              }}
+            ></div>
+          </div>
+        </>
+      )}
 
-     <div className={styles.gallery}>
+    
+      {/* Gallery */}
+      <div className={styles.gallery}>
         {imagesToDisplay.map((image, index) => (
           <motion.div
             key={index}
             className={styles.galleryItem}
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay:0 }}
+            transition={{ duration: 0.5, delay: 0 }}
             onClick={() => openModal(index)} // Abre o modal ao clicar
           >
             <img
@@ -567,10 +625,47 @@ useEffect(() => {
       {/* Elemento "sentinela" para o IntersectionObserver */}
       <div ref={observerRef} className={styles.observer}></div>
 
-      {loading && (
-        <div className={styles.spinner}>
-          <div className={styles.loader}></div>
-        </div>
+     {/* Spinner while images load */}
+     {loading && (
+        <>
+          {/* The keyframes style */}
+          <style>
+            {`
+              @keyframes spin {
+                0% {
+                  transform: rotate(0deg);
+                }
+                100% {
+                  transform: rotate(360deg);
+                }
+              }
+            `}
+          </style>
+          <div
+            style={{
+              position: "relative",
+              top: "0",
+              left: "0",
+              right: "0",
+              bottom: "0",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: "1000",
+            }}
+          >
+            <div
+              style={{
+                border: "8px solid #f3f3f3", /* Light gray */
+                borderTop: "8px solid #3498db", /* Blue */
+                borderRadius: "50%",
+                width: "50px",
+                height: "50px",
+                animation: "spin 2s linear infinite",
+              }}
+            ></div>
+          </div>
+        </>
       )}
 
 

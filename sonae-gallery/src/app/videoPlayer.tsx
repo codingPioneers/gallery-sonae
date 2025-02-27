@@ -16,7 +16,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ youtubeUrl }) => {
     if (!youtubeUrl) {
       const fetchVideo = async () => {
         try {
-          const videoRef = ref(storage, 'videos/video.mp4'); // Ajuste o caminho do vídeo conforme necessário
+          const videoRef = ref(storage, 'videos/video.mov'); // Ajuste o caminho do vídeo conforme necessário
           const url = await getDownloadURL(videoRef);
           setVideoUrl(url);
         } catch (error) {
