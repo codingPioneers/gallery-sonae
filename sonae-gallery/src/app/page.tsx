@@ -1,25 +1,25 @@
 "use client"; // Indica que este componente é um Client Component
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from "react";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth"; // Importe o tipo `User`
-import { useRouter } from 'next/navigation';
-import { useSwipeable } from 'react-swipeable'; // Importa o hook react-swipeable
+import { useRouter } from "next/navigation";
+import { useSwipeable } from "react-swipeable"; // Importa o hook react-swipeable
 import { usePathname } from "next/navigation"; // Para saber a página atual
 import Link from "next/link";
-import { useMediaQuery } from '@mui/material';
+import { useMediaQuery } from "@mui/material";
 
-import styles from './page.module.css';
-import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
-import { storage } from '../../firebase'; // Certifique-se de que este é o caminho correto
-import { motion } from 'framer-motion'; // Importar Framer Motion
-import JSZip from 'jszip'; // Importa JSZip para compactar os arquivos
-import { saveAs } from 'file-saver'; // Biblioteca para salvar o arquivo zip
-import logo from './assets/Sonae-Logo.png'; // Importar o logo
-import bolas from './assets/BOLAS.png'
-import risca from './assets/risca.png'
-import circle from './assets/circle.png'
-import VideoPlayer from './videoPlayer';
-import Navbar from './global/Navbar';
+import styles from "./page.module.css";
+import { ref, listAll, getDownloadURL, getMetadata } from "firebase/storage";
+import { storage } from "../../firebase"; // Certifique-se de que este é o caminho correto
+import { motion } from "framer-motion"; // Importar Framer Motion
+import JSZip from "jszip"; // Importa JSZip para compactar os arquivos
+import { saveAs } from "file-saver"; // Biblioteca para salvar o arquivo zip
+import logo from "./assets/Sonae-Logo.png"; // Importar o logo
+import bolas from "./assets/BOLAS.png";
+import risca from "./assets/risca.png";
+import circle from "./assets/circle.png";
+import VideoPlayer from "./videoPlayer";
+import Navbar from "./global/Navbar";
 
 const Gallery = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -32,7 +32,9 @@ const Gallery = () => {
   const [currentBlock, setCurrentBlock] = useState(0);
   const [showTopLogo, setShowTopLogo] = useState(false); // Estado para controlar o logo do topo
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(
+    null
+  );
   const observerRef = useRef<HTMLDivElement | null>(null);
   const modalRef = useRef<HTMLDivElement | null>(null); // Referência para o modal
   const router = useRouter();
@@ -40,8 +42,7 @@ const Gallery = () => {
   const [allImagesLoaded, setAllImagesLoaded] = useState(false); // Estado para verificar se todas as imagens foram carregadas
   const [isVisible, setIsVisible] = useState(false); // Controla a visibilidade da barra
   const pathname = usePathname(); // Identifica a página atual
-  const isSmallScreen = useMediaQuery('(max-width: 768px)');
-
+  const isSmallScreen = useMediaQuery("(max-width: 768px)");
 
   // Verificação de autenticação
   useEffect(() => {
@@ -50,7 +51,7 @@ const Gallery = () => {
       if (user) {
         setUser(user);
       } else {
-        router.push('/login'); // Redireciona para login se não autenticado
+        router.push("/login"); // Redireciona para login se não autenticado
       }
       setLoadingAuth(false); // Marca a verificação de autenticação como concluída
     });
@@ -62,7 +63,7 @@ const Gallery = () => {
     // Mostra a barra de navegação após 3 segundos
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 3000);
+    }, 0);
 
     return () => clearTimeout(timer);
   }, []);
@@ -78,7 +79,7 @@ const Gallery = () => {
 
   // Carregar as imagens em lotes (batches)
   const fetchImagesInBatches = async (batchSize: number) => {
-    const folders = ['galeria/Day 1', 'galeria/Day 2']; // Add more folders as needed
+    const folders = ["galeria/Day 1", "galeria/Day 2"]; // Add more folders as needed
     let allImages: string[] = [];
 
     for (const folder of folders) {
@@ -88,42 +89,41 @@ const Gallery = () => {
 
       for (let i = 0; i < totalImages; i += batchSize) {
         const batch = res.items.slice(i, i + batchSize);
-        const urls = await Promise.all(batch.map(item => getDownloadURL(item)));
+        const urls = await Promise.all(
+          batch.map((item) => getDownloadURL(item))
+        );
 
         allImages = [...allImages, ...urls];
 
-        setImageLoadingStatus((prevStatus) => [...prevStatus, ...Array(urls.length).fill(true)]);
+        setImageLoadingStatus((prevStatus) => [
+          ...prevStatus,
+          ...Array(urls.length).fill(true),
+        ]);
 
         // Delay to avoid overloading
         await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Remove duplicates and update state
+        setImages((prevImages) => {
+          const newImages = allImages.filter(
+            (url) => !prevImages.includes(url)
+          );
+          return [...prevImages, ...newImages];
+        });
+
+        setAllImagesLoaded(true);
       }
     }
-
-    // Remove duplicates and update state
-    setImages((prevImages) => {
-      const newImages = allImages.filter(url => !prevImages.includes(url));
-      return [...prevImages, ...newImages];
-    });
-
-    setAllImagesLoaded(true);
-
-
   };
 
-
-
   useEffect(() => {
-    fetchImagesInBatches(10); // Limite o número de imagens a serem carregadas por vez
+    const timer = setTimeout(() => {
+      fetchImagesInBatches(10);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+    // Limite o número de imagens a serem carregadas por vez
   }, []);
-
-
-
-
-
-
-
-
-
 
   // Função para carregar mais blocos de imagens à medida que o usuário rola
   const loadMoreImages = () => {
@@ -135,21 +135,18 @@ const Gallery = () => {
     }, 0); // Simula um pequeno atraso
   };
 
-
-
-
-
-
-
   // Função para observar o final da galeria e carregar mais imagens
   useEffect(() => {
     const currentObserver = observerRef.current;
 
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        loadMoreImages();
-      }
-    }, { threshold: 1.0 });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMoreImages();
+        }
+      },
+      { threshold: 1.0 }
+    );
 
     if (currentObserver) observer.observe(currentObserver);
 
@@ -158,27 +155,17 @@ const Gallery = () => {
     };
   }, [observerRef, images]);
 
-
-
-
-
- 
-
-
-
-
-
   const downloadZipFromStorage = async () => {
     setIsDownloading(true); // Bloqueia o botão enquanto o download estiver em andamento
 
     try {
-      const zipRef = ref(storage, 'galeria-ziped/gallery.zip'); // Caminho para o arquivo ZIP no Firebase Storage
+      const zipRef = ref(storage, "galeria-ziped/gallery.zip"); // Caminho para o arquivo ZIP no Firebase Storage
       const zipUrl = await getDownloadURL(zipRef);
 
       // Criar um link de download
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = zipUrl;
-      a.download = 'galeria.zip'; // Nome do arquivo que será baixado
+      a.download = "galeria.zip"; // Nome do arquivo que será baixado
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -189,12 +176,6 @@ const Gallery = () => {
       setIsDownloading(false); // Desbloqueia o botão em caso de erro
     }
   };
-
-
-
-
-
-
 
   // Função para abrir a preview de uma imagem
   const openModal = (index: number) => {
@@ -229,16 +210,15 @@ const Gallery = () => {
     trackTouch: true,
   });
 
-
   // Adicione um efeito para capturar eventos de teclado
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isModalOpen) {
-        if (event.key === 'ArrowRight') {
+        if (event.key === "ArrowRight") {
           goToNextImage(); // Próxima imagem
-        } else if (event.key === 'ArrowLeft') {
+        } else if (event.key === "ArrowLeft") {
           goToPreviousImage(); // Imagem anterior
-        } else if (event.key === 'Escape') {
+        } else if (event.key === "Escape") {
           closeModal(); // Fechar modal com 'Esc'
         }
       }
@@ -246,25 +226,24 @@ const Gallery = () => {
 
     // Adiciona o event listener quando o modal é aberto
     if (isModalOpen) {
-      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener("keydown", handleKeyDown);
     }
 
     // Remove o event listener quando o modal é fechado
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isModalOpen, currentImageIndex]); // Reexecuta quando o modal é aberto ou fechado
-
-
-
 
   const downloadImage = async () => {
     if (currentImageIndex !== null) {
       const imageUrl = images[currentImageIndex];
       try {
         // Extrai o nome do arquivo da URL sem o caminho completo, removendo "galeria/" se presente
-        const fullPath = decodeURIComponent(imageUrl.substring(imageUrl.lastIndexOf('/') + 1).split('?')[0]);
-        const imageName = fullPath.replace('galeria/', ''); // Remove qualquer "galeria/" do caminho
+        const fullPath = decodeURIComponent(
+          imageUrl.substring(imageUrl.lastIndexOf("/") + 1).split("?")[0]
+        );
+        const imageName = fullPath.replace("galeria/", ""); // Remove qualquer "galeria/" do caminho
 
         // Cria uma referência para a mesma imagem na pasta correta de alta qualidade
         const highQualityRef = ref(storage, `galeria-download/${imageName}`);
@@ -278,7 +257,7 @@ const Gallery = () => {
         const blobUrl = window.URL.createObjectURL(blob);
 
         // Cria um link temporário para download
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = blobUrl;
         a.download = imageName; // Usar o mesmo nome de arquivo
         document.body.appendChild(a);
@@ -288,12 +267,13 @@ const Gallery = () => {
         // Revoga o URL temporário
         window.URL.revokeObjectURL(blobUrl);
       } catch (error) {
-        console.error("Erro ao fazer o download da imagem de alta qualidade:", error);
+        console.error(
+          "Erro ao fazer o download da imagem de alta qualidade:",
+          error
+        );
       }
     }
   };
-
-
 
   const [videoDownloadUrl, setVideoDownloadUrl] = useState<string | null>(null); // URL para o download do vídeo
   const [isVideoDownloading, setIsVideoDownloading] = useState(false); // Estado para indicar se o vídeo está sendo baixado
@@ -303,7 +283,7 @@ const Gallery = () => {
   useEffect(() => {
     const fetchVideo = async () => {
       try {
-        const videoRef = ref(storage, 'video-ziped/video.mov.zip'); // Caminho do vídeo no Firebase Storage
+        const videoRef = ref(storage, "video-ziped/video.mov.zip"); // Caminho do vídeo no Firebase Storage
         const url = await getDownloadURL(videoRef);
         setVideoDownloadUrl(url); // Guarda a URL do vídeo no estado
       } catch (error) {
@@ -320,13 +300,13 @@ const Gallery = () => {
     setIsDownloading(true); // Bloqueia o botão enquanto o download estiver em andamento
 
     try {
-      const zipRef = ref(storage, 'video-ziped/video.mov.zip'); // Caminho para o arquivo ZIP no Firebase Storage
+      const zipRef = ref(storage, "video-ziped/video.mov.zip"); // Caminho para o arquivo ZIP no Firebase Storage
       const zipUrl = await getDownloadURL(zipRef);
 
       // Criar um link de download
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = zipUrl;
-      a.download = 'video.zip'; // Nome do arquivo que será baixado
+      a.download = "video.zip"; // Nome do arquivo que será baixado
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -337,20 +317,6 @@ const Gallery = () => {
       setIsDownloading(false); // Desbloqueia o botão em caso de erro
     }
   };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   const imagesToDisplay = images.slice(0, (currentBlock + 1) * blockSize);
 
@@ -370,24 +336,17 @@ const Gallery = () => {
             alt="Sonae Logo"
             className={styles.spinnerLogo}
             initial={{ opacity: 0, y: -50 }} // Inicialmente invisível e levemente acima
-            animate={{ opacity: 1, y: 0 }}   // Fica visível e se move para a posição original
-            exit={{ opacity: 0, y: 50 }}     // Ao sair, fica invisível e move para baixo
-            transition={{ duration: 3 }}     // Duração da animação de 3 segundos
+            animate={{ opacity: 1, y: 0 }} // Fica visível e se move para a posição original
+            exit={{ opacity: 0, y: 50 }} // Ao sair, fica invisível e move para baixo
+            transition={{ duration: 3 }} // Duração da animação de 3 segundos
           />
         </div>
       </div>
     );
   }
 
-
-
-
-
-
   return (
     <div className={styles.background}>
-
-
       {/*
       {isVisible && (
         <motion.nav
@@ -467,7 +426,7 @@ const Gallery = () => {
               onClick={downloadZipFromStorage}
               disabled={isDownloading} // Desabilita o botão durante o download
             >
-              {isDownloading ? 'A descarregar...' : 'Descarregar álbum'}
+              {isDownloading ? "A descarregar..." : "Descarregar álbum"}
             </motion.button>
 
             {/* Botão para baixar o vídeo */}
@@ -478,15 +437,11 @@ const Gallery = () => {
               className={styles.additionalDownloadContainer}
             >
               <button onClick={handleDownloadVideo} id={styles.downloadVideo}>
-                {isVideoDownloading ? `A descarregar... (${videoDownloadProgress}%)` : 'Descarregar vídeo'}
+                {isVideoDownloading
+                  ? `A descarregar... (${videoDownloadProgress}%)`
+                  : "Descarregar vídeo"}
               </button>
             </motion.div>
-
-
-
-
-
-
           </motion.div>
         </motion.div>
 
@@ -515,33 +470,21 @@ const Gallery = () => {
             transition={{ duration: 1, delay: 1.6 }}
           />
         </motion.div>
-
-
       </div>
-
-
-
-
-
-
 
       <div className={styles.videoSection}>
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }} // Começa com opacidade 0 e menor escala
-          animate={{ opacity: 1, scale: 1 }}   // Anima para opacidade 1 e escala normal
-          transition={{ duration: 2, delay: 2 }}       // Duração da animação de 1.5 segundos
-          style={{ width: isSmallScreen ? '100%' : '90%', zIndex: '1' }}
+          animate={{ opacity: 1, scale: 1 }} // Anima para opacidade 1 e escala normal
+          transition={{ duration: 2, delay: 2 }} // Duração da animação de 1.5 segundos
+          style={{ width: isSmallScreen ? "100%" : "90%", zIndex: "1" }}
         >
           <VideoPlayer />
         </motion.div>
-
       </div>
 
-
-
-
-     {/* Spinner while images load */}
-     {!allImagesLoaded && (
+      {/* Spinner while images load */}
+      {!allImagesLoaded && (
         <>
           {/* The keyframes style */}
           <style>
@@ -571,8 +514,8 @@ const Gallery = () => {
           >
             <div
               style={{
-                border: "8px solid #f3f3f3", /* Light gray */
-                borderTop: "8px solid #3498db", /* Blue */
+                border: "8px solid #f3f3f3" /* Light gray */,
+                borderTop: "8px solid #3498db" /* Blue */,
                 borderRadius: "50%",
                 width: "50px",
                 height: "50px",
@@ -583,7 +526,6 @@ const Gallery = () => {
         </>
       )}
 
-    
       {/* Gallery */}
       <div className={styles.gallery}>
         {imagesToDisplay.map((image, index) => (
@@ -605,7 +547,8 @@ const Gallery = () => {
               decoding="async"
               onLoad={(e) => {
                 const imgElement = e.currentTarget;
-                const isHorizontal = imgElement.naturalWidth > imgElement.naturalHeight;
+                const isHorizontal =
+                  imgElement.naturalWidth > imgElement.naturalHeight;
 
                 // Aplica a classe CSS baseada na orientação da imagem
                 if (isHorizontal) {
@@ -625,8 +568,8 @@ const Gallery = () => {
       {/* Elemento "sentinela" para o IntersectionObserver */}
       <div ref={observerRef} className={styles.observer}></div>
 
-     {/* Spinner while images load */}
-     {loading && (
+      {/* Spinner while images load */}
+      {loading && (
         <>
           {/* The keyframes style */}
           <style>
@@ -656,8 +599,8 @@ const Gallery = () => {
           >
             <div
               style={{
-                border: "8px solid #f3f3f3", /* Light gray */
-                borderTop: "8px solid #3498db", /* Blue */
+                border: "8px solid #f3f3f3" /* Light gray */,
+                borderTop: "8px solid #3498db" /* Blue */,
                 borderRadius: "50%",
                 width: "50px",
                 height: "50px",
@@ -667,18 +610,6 @@ const Gallery = () => {
           </div>
         </>
       )}
-
-
-
-
-
-
-
-
-
-
-
-
 
       {/* Modal de preview */}
       {isModalOpen && currentImageIndex !== null && (
@@ -702,11 +633,18 @@ const Gallery = () => {
               &times;
             </button>
           </div>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
             <button className={styles.prevButton} onClick={goToPreviousImage}>
               &#8249;
             </button>
-            <img src={images[currentImageIndex]} alt="Preview" className={styles.modalImage} />
+            <img
+              src={images[currentImageIndex]}
+              alt="Preview"
+              className={styles.modalImage}
+            />
             <button className={styles.nextButton} onClick={goToNextImage}>
               &#8250;
             </button>
@@ -718,8 +656,6 @@ const Gallery = () => {
 };
 
 export default Gallery;
-
-
 
 // Estilos da barra de navegação
 const navStyle = {
