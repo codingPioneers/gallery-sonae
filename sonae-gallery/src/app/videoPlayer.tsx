@@ -76,8 +76,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ youtubeUrl, selectedEdition }
           preload="auto"
           controlsList="nodownload" // Bloqueia o botão de download
         >
-          {videoMp4Url && <source src={videoMp4Url} type="video/mp4" />}
           {videoWebmUrl && <source src={videoWebmUrl} type="video/webm" />}
+          {videoMp4Url && <source src={videoMp4Url} type="video/mp4" />}
+
           Seu navegador não suporta a reprodução de vídeos.
         </video>
         )}
