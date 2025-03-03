@@ -1,4 +1,5 @@
-"use client";
+"use client"; 
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; // Importando o hook do Next.js
 import { User, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";

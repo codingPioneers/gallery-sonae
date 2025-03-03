@@ -9,109 +9,94 @@ import Link from "next/link";
 import { useMediaQuery } from "@mui/material";
 
 import styles from "./page.module.css";
-import { ref, listAll, getDownloadURL, getMetadata } from "firebase/storage";
+import { ref, listAll, getDownloadURL } from "firebase/storage";
 import { storage } from "../../firebase"; // Certifique-se de que este é o caminho correto
 import { motion } from "framer-motion"; // Importar Framer Motion
-import JSZip from "jszip"; // Importa JSZip para compactar os arquivos
-import { saveAs } from "file-saver"; // Biblioteca para salvar o arquivo zip
+
 import logo from "./assets/Sonae-Logo.png"; // Importar o logo
 import bolas from "./assets/BOLAS.png";
 import risca from "./assets/risca.png";
 import circle from "./assets/circle.png";
 import VideoPlayer from "./videoPlayer";
+import { useSearchParams } from "next/navigation"; // Import this hook
+import zIndex from "@mui/material/styles/zIndex";
 
-const Gallery = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loadingAuth, setLoadingAuth] = useState(true); // Estado para carregamento de autenticação
-  const [loading, setLoading] = useState(false);
+
+interface GalleryProps {
+  selectedEdition: string;
+  setSelectedEdition: (edition: string) => void;
+}
+
+
+const Gallery: React.FC<GalleryProps> = ({ selectedEdition, setSelectedEdition }) => {
   const [isDownloading, setIsDownloading] = useState(false); // Estado para bloquear o botão durante o download
 
+
+  const router = useRouter();
   const [images, setImages] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const [imageLoadingStatus, setImageLoadingStatus] = useState<boolean[]>([]); // Estado para armazenar o carregamento de cada imagem
   const [currentBlock, setCurrentBlock] = useState(0);
-  const [showTopLogo, setShowTopLogo] = useState(false); // Estado para controlar o logo do topo
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(
     null
   );
   const observerRef = useRef<HTMLDivElement | null>(null);
   const modalRef = useRef<HTMLDivElement | null>(null); // Referência para o modal
-  const router = useRouter();
   const blockSize = 12; // Definir o número de imagens por bloco
   const [allImagesLoaded, setAllImagesLoaded] = useState(false); // Estado para verificar se todas as imagens foram carregadas
-  const [isVisible, setIsVisible] = useState(false); // Controla a visibilidade da barra
+  const [isVisible, setIsVisible] = useState(true); // Controla a visibilidade da barra
   const pathname = usePathname(); // Identifica a página atual
   const isSmallScreen = useMediaQuery("(max-width: 768px)");
 
 
-  const [selectedEdition, setSelectedEdition] = useState("edicao2");
 
-  const handleEditionChange = (edition: string) => {
-    if (selectedEdition !== edition) {
-      setSelectedEdition(edition);
-    }
-  };
-  
+  const searchParams = useSearchParams();
+
+
+
+  // Fetch images when selectedEdition changes
   useEffect(() => {
-    if (!selectedEdition) return; // Prevents unnecessary fetches if no edition is selected
-    
-    console.log(`Fetching images from folder: galeria/${selectedEdition}`);
-    
-    setImages([]); // Clear existing images
-    setImageLoadingStatus([]); // Reset loading statuses
-    setCurrentBlock(0); // Reset block pagination
-    setAllImagesLoaded(false); // Reset all loaded flag
-  
-    fetchImagesInBatches(10, selectedEdition);
-  }, [selectedEdition]); // Runs only when selectedEdition changes
-  
+    fetchImages(selectedEdition);
+  }, [selectedEdition]);
 
 
-  useEffect(() => {
-    if (selectedEdition) {
-     handleEditionChange(selectedEdition);
-    }
-  }, [selectedEdition]); // Re-run when selectedEdition changes
+ // Function to update edition and force reload
+ const handleEditionChange = (edition: string) => {
+  if (selectedEdition !== edition) {
+    setSelectedEdition(edition);
+    localStorage.setItem("selectedEdition", edition); // Persist change
+    router.replace(`?edition=${edition}`);
+    window.location.reload(); // Force reload to update content
+  }
+};
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchImagesInBatches(10, selectedEdition);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [selectedEdition]); // Re-run effect when selectedEdition changes
-
-
-
-
-
-  // Verificação de autenticação
-
-  useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user);
-      } else {
-        router.push("/login"); // Redireciona para login se não autenticado
-      }
-      setLoadingAuth(false); // Marca a verificação de autenticação como concluída
-    });
-
-    return () => unsubscribe();
-  }, [router]);
+const fetchImages = async (edition: string) => {
+  const folder = `galeria/${edition}`;
+  setLoading(true);
+  try {
+    const storageRef = ref(storage, folder);
+    const res = await listAll(storageRef);
+    const urls = await Promise.all(res.items.map((item) => getDownloadURL(item)));
+    setImages(urls);
+  } catch (error) {
+    console.error("Error fetching images:", error);
+  } finally {
+    setLoading(false);
+    setAllImagesLoaded(true);
+  }
+};
 
 
 
 
-  useEffect(() => {
-    // Mostra a barra de navegação após 3 segundos
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 0);
 
-    return () => clearTimeout(timer);
-  }, []);
+
+
+
+
+
 
   // Função chamada quando uma imagem termina de carregar
   const handleImageLoad = (index: number) => {
@@ -170,14 +155,6 @@ const Gallery = () => {
 
 
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchImagesInBatches(10, selectedEdition);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-    // Limite o número de imagens a serem carregadas por vez
-  }, []);
 
   // Função para carregar mais blocos de imagens à medida que o usuário rola
   const loadMoreImages = () => {
@@ -209,6 +186,9 @@ const Gallery = () => {
     };
   }, [observerRef, images]);
 
+
+
+  
   const downloadZipFromStorage = async () => {
     setIsDownloading(true); // Bloqueia o botão enquanto o download estiver em andamento
 
@@ -297,7 +277,7 @@ const Gallery = () => {
         const fullPath = decodeURIComponent(
           imageUrl.substring(imageUrl.lastIndexOf("/") + 1).split("?")[0]
         );
-        const imageName = fullPath.replace("galeria/", ""); // Remove qualquer "galeria/" do caminho
+        const imageName = fullPath.replace(/^galeria\/[^/]+\//, ""); // Remove any duplicate folder reference
 
         // Cria uma referência para a mesma imagem na pasta correta de alta qualidade
         const highQualityRef = ref(storage, `galeria-download/${selectedEdition}/${imageName}`);
@@ -328,6 +308,9 @@ const Gallery = () => {
       }
     }
   };
+
+
+
 
   const [videoDownloadUrl, setVideoDownloadUrl] = useState<string | null>(null); // URL para o download do vídeo
   const [isVideoDownloading, setIsVideoDownloading] = useState(false); // Estado para indicar se o vídeo está sendo baixado
@@ -380,78 +363,56 @@ const Gallery = () => {
     swipeHandlers.ref(el); // Associa o ref do swipeHandlers
   };
 
-  // Exibe um carregamento durante a verificação de autenticação
-  /*
-  if (loadingAuth) {
-    return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.spinnerWrapper}>
-          <motion.img
-            src={logo.src}
-            alt="Sonae Logo"
-            className={styles.spinnerLogo}
-            initial={{ opacity: 0, y: -50 }} // Inicialmente invisível e levemente acima
-            animate={{ opacity: 1, y: 0 }} // Fica visível e se move para a posição original
-            exit={{ opacity: 0, y: 50 }} // Ao sair, fica invisível e move para baixo
-            transition={{ duration: 3 }} // Duração da animação de 3 segundos
-          />
-        </div>
-      </div>
-    );
-  } */
+
 
 
   return (
     <div className={styles.background}>
-      {/*
-      {isVisible && (
-        <motion.nav
-          style={navStyle}
-          initial={{ opacity: 0, y: -50 }} // Começa invisível e deslocada para cima
-          animate={{ opacity: 1, y: 0 }} // Suavemente se torna visível e desloca para a posição correta
-          transition={{ duration: 1 }} // Controle da duração da animação (1 segundo)
-        >
-                 
-          <ul style={navListStyle}>
-            <li style={navItemStyle}>
-              <Link href="/" style={pathname === "/" ? navLinkActiveStyle : navLinkStyle}>
-                Galeria
-              </Link>
-            </li>
-            <li style={navItemStyle}>
-              <Link href="/palestras" style={pathname === "/palestras" ? navLinkActiveStyle : navLinkStyle}>
-                Palestras
-              </Link>
-            </li>
-          </ul>
-         
-        </motion.nav>
-      )}
-        */}
+     
 
 
 
-      {isVisible && (
-        <motion.nav
-          style={navStyle}
-          initial={{ opacity: 0, y: -50 }} // Começa invisível e deslocada para cima
-          animate={{ opacity: 1, y: 0 }} // Suavemente se torna visível e desloca para a posição correta
-          transition={{ duration: 1 }} // Controle da duração da animação (1 segundo)
-        >
-<ul style={navListStyle}>
-  <li style={navItemStyle}>
-    <Link href="#" onClick={() => handleEditionChange("edicao1")} style={selectedEdition === "edicao1" ? navLinkActiveStyle : navLinkStyle}>
-      Edição 2024
-    </Link>
-  </li>
-  <li style={navItemStyle}>
-    <Link href="#" onClick={() => handleEditionChange("edicao2")} style={selectedEdition === "edicao2" ? navLinkActiveStyle : navLinkStyle}>
-      Edição 2025
-    </Link>
-  </li>
-</ul>
-        </motion.nav>
-      )}
+     {isVisible && (
+  <motion.nav
+    style={navStyle}
+    initial={{ opacity: 0, y: -50 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 1 }}
+  >
+    <ul style={navListStyle}>
+      <li style={navItemStyle}>
+      <button 
+        onClick={() => handleEditionChange("edicao1")} 
+        style={{ 
+          textDecoration:selectedEdition === "edicao1" ?'underline': 'none',
+           backgroundColor:'transparent',
+           border:'none',
+           fontSize:'20px',
+           marginTop:'1rem',
+           fontWeight:'600'
+         }}      >
+        Edição 2024
+      </button>
+      </li>
+      <li style={navItemStyle}>
+      <button 
+        onClick={() => handleEditionChange("edicao2")} 
+        style={{ 
+           textDecoration:selectedEdition === "edicao2" ?'underline': 'none',
+            backgroundColor:'transparent',
+            border:'none',
+            fontSize:'20px',
+            marginTop:'1rem',
+            fontWeight:'600'
+          }}
+      >
+        Edição 2025
+      </button>
+      </li>
+    </ul>
+  </motion.nav>
+)}
+
 
 
       <div className={styles.heroSection}>
@@ -498,7 +459,15 @@ const Gallery = () => {
               transition={{ duration: 1, delay: 1 }}
             />
 
-            <p className={styles.eventDate}>20 & 21 February 2025</p>
+            <motion.p
+              className={styles.eventDate}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 1 }}
+            >
+              {selectedEdition === "edicao1" ? "16 & 17 September 2024" : "20 & 21 February 2025"}
+            </motion.p>
+        
             <motion.button
               className={styles.downloadAllButton}
               initial={{ opacity: 0, y: 20 }}
@@ -564,10 +533,9 @@ const Gallery = () => {
         </motion.div>
       </div>
 
-      {/* Spinner while images load */}
+      {/* Spinner while images load 
       {!allImagesLoaded && (
         <>
-          {/* The keyframes style */}
           <style>
             {`
               @keyframes spin {
@@ -595,8 +563,8 @@ const Gallery = () => {
           >
             <div
               style={{
-                border: "8px solid #f3f3f3" /* Light gray */,
-                borderTop: "8px solid #3498db" /* Blue */,
+                border: "8px solid #f3f3f3" ,
+                borderTop: "8px solid #3498db" ,
                 borderRadius: "50%",
                 width: "50px",
                 height: "50px",
@@ -606,6 +574,8 @@ const Gallery = () => {
           </div>
         </>
       )}
+
+      */}
 
       {/* Gallery */}
       <div className={styles.gallery}>
@@ -756,6 +726,7 @@ const navListStyle = {
   justifyContent: "center",
   margin: 0,
   padding: 0,
+  zIndex:'10000'
 };
 
 const navItemStyle = {
@@ -763,15 +734,6 @@ const navItemStyle = {
   margin: "0 20px",
 };
 
-const navLinkStyle = {
-  color: "white",
-  textDecoration: "none",
-  fontSize: "18px",
-  padding: "10px 20px",
-  fontWeight: "bold",
-};
 
-const navLinkActiveStyle = {
-  ...navLinkStyle,
-  textDecoration: "underline",
-};
+
+

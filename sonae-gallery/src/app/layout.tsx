@@ -1,6 +1,13 @@
+"use client"; 
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import AppContent from "./App";
+
+
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -14,13 +21,7 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-export const metadata: Metadata = {
-  title: "Event Photos",
-  description: "Galeria do evento Sonae",
-  icons: {
-    icon: ["/icon.png"],
-  },
-};
+
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -29,8 +30,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/icon.png" sizes="64x64" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children} {/* No AuthProvider or BrowserRouter here */}
-      </body>
+      <AuthProvider>
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </AuthProvider>      </body>
     </html>
   );
 }

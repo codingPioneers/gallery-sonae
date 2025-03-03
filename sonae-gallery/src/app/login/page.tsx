@@ -37,7 +37,7 @@ const Login = () => {
       await setPersistence(auth, browserSessionPersistence);
       // Faz a autenticação com o email predefinido e a senha que o usuário insere
       await signInWithEmailAndPassword(auth, email, password);
-      router.push('/'); // Redireciona após login bem-sucedido
+      window.location.href = "/";
     } catch (error) {
       // Define a mensagem de erro
       setError('Senha incorreta. Tente novamente.');
