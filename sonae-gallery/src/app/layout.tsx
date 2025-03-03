@@ -7,6 +7,7 @@ const geistSans = localFont({
   variable: "--font-geist-sans",
   weight: "100 900",
 });
+
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
@@ -16,24 +17,19 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Event Photos",
   description: "Galeria do evento Sonae",
-  icons:{
-    icon:['/icon.png']
-  }
+  icons: {
+    icon: ["/icon.png"],
+  },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
-      <link rel="icon" href="/icon.png" sizes="64x64" />
+        <link rel="icon" href="/icon.png" sizes="64x64" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-
-        {children}
+        {children} {/* No AuthProvider or BrowserRouter here */}
       </body>
     </html>
   );

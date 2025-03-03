@@ -19,7 +19,6 @@ import bolas from "./assets/BOLAS.png";
 import risca from "./assets/risca.png";
 import circle from "./assets/circle.png";
 import VideoPlayer from "./videoPlayer";
-import Navbar from "./global/Navbar";
 
 const Gallery = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -44,7 +43,50 @@ const Gallery = () => {
   const pathname = usePathname(); // Identifica a página atual
   const isSmallScreen = useMediaQuery("(max-width: 768px)");
 
+
+  const [selectedEdition, setSelectedEdition] = useState("edicao2");
+
+  const handleEditionChange = (edition: string) => {
+    if (selectedEdition !== edition) {
+      setSelectedEdition(edition);
+    }
+  };
+  
+  useEffect(() => {
+    if (!selectedEdition) return; // Prevents unnecessary fetches if no edition is selected
+    
+    console.log(`Fetching images from folder: galeria/${selectedEdition}`);
+    
+    setImages([]); // Clear existing images
+    setImageLoadingStatus([]); // Reset loading statuses
+    setCurrentBlock(0); // Reset block pagination
+    setAllImagesLoaded(false); // Reset all loaded flag
+  
+    fetchImagesInBatches(10, selectedEdition);
+  }, [selectedEdition]); // Runs only when selectedEdition changes
+  
+
+
+  useEffect(() => {
+    if (selectedEdition) {
+     handleEditionChange(selectedEdition);
+    }
+  }, [selectedEdition]); // Re-run when selectedEdition changes
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchImagesInBatches(10, selectedEdition);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [selectedEdition]); // Re-run effect when selectedEdition changes
+
+
+
+
+
   // Verificação de autenticação
+
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -58,6 +100,9 @@ const Gallery = () => {
 
     return () => unsubscribe();
   }, [router]);
+
+
+
 
   useEffect(() => {
     // Mostra a barra de navegação após 3 segundos
@@ -78,13 +123,17 @@ const Gallery = () => {
   };
 
   // Carregar as imagens em lotes (batches)
-  const fetchImagesInBatches = async (batchSize: number) => {
-    const folders = ["galeria/Day 1", "galeria/Day 2"]; // Add more folders as needed
+  const fetchImagesInBatches = async (batchSize: number, edition: string) => {
+    const folder = `galeria/${edition}`; // Dynamic folder based on edition
+    console.log(`Fetching images from folder: ${folder}`); // Debugging
+
     let allImages: string[] = [];
 
-    for (const folder of folders) {
+    try {
       const storageRef = ref(storage, folder);
       const res = await listAll(storageRef);
+      console.log(`Found ${res.items.length} items in folder: ${folder}`); // Debugging
+
       const totalImages = res.items.length;
 
       for (let i = 0; i < totalImages; i += batchSize) {
@@ -113,12 +162,17 @@ const Gallery = () => {
 
         setAllImagesLoaded(true);
       }
+    } catch (error) {
+      console.error(`Error fetching images from folder ${folder}:`, error); // Debugging
     }
   };
 
+
+
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchImagesInBatches(10);
+      fetchImagesInBatches(10, selectedEdition);
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -159,7 +213,7 @@ const Gallery = () => {
     setIsDownloading(true); // Bloqueia o botão enquanto o download estiver em andamento
 
     try {
-      const zipRef = ref(storage, "galeria-ziped/gallery.zip"); // Caminho para o arquivo ZIP no Firebase Storage
+      const zipRef = ref(storage, `galeria-ziped/${selectedEdition}.zip`); // Caminho para o arquivo ZIP no Firebase Storage
       const zipUrl = await getDownloadURL(zipRef);
 
       // Criar um link de download
@@ -246,7 +300,7 @@ const Gallery = () => {
         const imageName = fullPath.replace("galeria/", ""); // Remove qualquer "galeria/" do caminho
 
         // Cria uma referência para a mesma imagem na pasta correta de alta qualidade
-        const highQualityRef = ref(storage, `galeria-download/${imageName}`);
+        const highQualityRef = ref(storage, `galeria-download/${selectedEdition}/${imageName}`);
 
         // Obtém a URL de download da imagem em alta qualidade
         const highQualityUrl = await getDownloadURL(highQualityRef);
@@ -300,7 +354,7 @@ const Gallery = () => {
     setIsDownloading(true); // Bloqueia o botão enquanto o download estiver em andamento
 
     try {
-      const zipRef = ref(storage, "video-ziped/video.mov.zip"); // Caminho para o arquivo ZIP no Firebase Storage
+      const zipRef = ref(storage, `video-ziped/${selectedEdition}.mp4.zip`); // Caminho para o arquivo ZIP no Firebase Storage
       const zipUrl = await getDownloadURL(zipRef);
 
       // Criar um link de download
@@ -327,6 +381,7 @@ const Gallery = () => {
   };
 
   // Exibe um carregamento durante a verificação de autenticação
+  /*
   if (loadingAuth) {
     return (
       <div className={styles.loadingContainer}>
@@ -343,7 +398,8 @@ const Gallery = () => {
         </div>
       </div>
     );
-  }
+  } */
+
 
   return (
     <div className={styles.background}>
@@ -373,8 +429,33 @@ const Gallery = () => {
       )}
         */}
 
+
+
+      {isVisible && (
+        <motion.nav
+          style={navStyle}
+          initial={{ opacity: 0, y: -50 }} // Começa invisível e deslocada para cima
+          animate={{ opacity: 1, y: 0 }} // Suavemente se torna visível e desloca para a posição correta
+          transition={{ duration: 1 }} // Controle da duração da animação (1 segundo)
+        >
+<ul style={navListStyle}>
+  <li style={navItemStyle}>
+    <Link href="#" onClick={() => handleEditionChange("edicao1")} style={selectedEdition === "edicao1" ? navLinkActiveStyle : navLinkStyle}>
+      Edição 2024
+    </Link>
+  </li>
+  <li style={navItemStyle}>
+    <Link href="#" onClick={() => handleEditionChange("edicao2")} style={selectedEdition === "edicao2" ? navLinkActiveStyle : navLinkStyle}>
+      Edição 2025
+    </Link>
+  </li>
+</ul>
+        </motion.nav>
+      )}
+
+
       <div className={styles.heroSection}>
-        {/* Círculo grande de fundo com animação */}
+        {/* Círculo grande de fundo com animação 
         <motion.img
           src={circle.src}
           alt="Sonae Logo"
@@ -382,7 +463,7 @@ const Gallery = () => {
           initial={{ opacity: 0, rotate: -90 }}
           animate={{ opacity: 1, rotate: 0 }}
           transition={{ duration: 1.5, delay: 0.3 }}
-        />
+        />*/}
 
         {/* Coluna Esquerda: Logo e Texto */}
         <motion.div
@@ -430,18 +511,18 @@ const Gallery = () => {
             </motion.button>
 
             {/* Botão para baixar o vídeo */}
-            <motion.div
+            <motion.button
+              className={styles.downloadAllButton}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.2, ease: "easeInOut", delay: 1.0 }}
-              className={styles.additionalDownloadContainer}
+              transition={{ duration: 1, delay: 1.2 }}
+              onClick={handleDownloadVideo}
             >
-              <button onClick={handleDownloadVideo} id={styles.downloadVideo}>
-                {isVideoDownloading
-                  ? `A descarregar... (${videoDownloadProgress}%)`
-                  : "Descarregar vídeo"}
-              </button>
-            </motion.div>
+              {isVideoDownloading
+                ? `A descarregar... (${videoDownloadProgress}%)`
+                : "Descarregar vídeo"}
+
+            </motion.button>
           </motion.div>
         </motion.div>
 
@@ -479,7 +560,7 @@ const Gallery = () => {
           transition={{ duration: 2, delay: 2 }} // Duração da animação de 1.5 segundos
           style={{ width: isSmallScreen ? "100%" : "90%", zIndex: "1" }}
         >
-          <VideoPlayer />
+          <VideoPlayer selectedEdition={selectedEdition} />
         </motion.div>
       </div>
 
