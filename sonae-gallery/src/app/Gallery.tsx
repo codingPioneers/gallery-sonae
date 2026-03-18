@@ -18,15 +18,15 @@ import VideoPlayer from "./videoPlayer";
 import { useSearchParams } from "next/navigation"; // Import this hook
 
 
- interface GalleryProps {
+interface GalleryProps {
   selectedEdition: string;
   setSelectedEdition: (edition: string) => void;
 }
 
 
- export const Gallery: React.FC<GalleryProps> = ({ selectedEdition, setSelectedEdition }) => {
- 
- 
+export const Gallery: React.FC<GalleryProps> = ({ selectedEdition, setSelectedEdition }) => {
+
+
   const [isDownloading, setIsDownloading] = useState(false); // Estado para bloquear o botão durante o download
 
 
@@ -59,31 +59,31 @@ import { useSearchParams } from "next/navigation"; // Import this hook
   }, [selectedEdition]);
 
 
- // Function to update edition and force reload
- const handleEditionChange = (edition: string) => {
-  if (selectedEdition !== edition) {
-    setSelectedEdition(edition);
-    localStorage.setItem("selectedEdition", edition); // Persist change
-    router.replace(`?edition=${edition}`);
-    window.location.reload(); // Force reload to update content
-  }
-};
+  // Function to update edition and force reload
+  const handleEditionChange = (edition: string) => {
+    if (selectedEdition !== edition) {
+      setSelectedEdition(edition);
+      localStorage.setItem("selectedEdition", edition); // Persist change
+      router.replace(`?edition=${edition}`);
+      window.location.reload(); // Force reload to update content
+    }
+  };
 
-const fetchImages = async (edition: string) => {
-  const folder = `galeria/${edition}`;
-  setLoading(true);
-  try {
-    const storageRef = ref(storage, folder);
-    const res = await listAll(storageRef);
-    const urls = await Promise.all(res.items.map((item) => getDownloadURL(item)));
-    setImages(urls);
-  } catch (error) {
-    console.error("Error fetching images:", error);
-  } finally {
-    setLoading(false);
-    setAllImagesLoaded(true);
-  }
-};
+  const fetchImages = async (edition: string) => {
+    const folder = `galeria/${edition}`;
+    setLoading(true);
+    try {
+      const storageRef = ref(storage, folder);
+      const res = await listAll(storageRef);
+      const urls = await Promise.all(res.items.map((item) => getDownloadURL(item)));
+      setImages(urls);
+    } catch (error) {
+      console.error("Error fetching images:", error);
+    } finally {
+      setLoading(false);
+      setAllImagesLoaded(true);
+    }
+  };
 
 
 
@@ -185,7 +185,7 @@ const fetchImages = async (edition: string) => {
 
 
 
-  
+
   const downloadZipFromStorage = async () => {
     setIsDownloading(true); // Bloqueia o botão enquanto o download estiver em andamento
 
@@ -365,53 +365,72 @@ const fetchImages = async (edition: string) => {
 
   return (
     <div className={styles.background}>
-     
 
 
 
-     {isVisible && (
-  <motion.nav
-    style={navStyle}
-    initial={{ opacity: 0, y: -50 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 1 }}
-  >
-    <ul style={navListStyle}>
-      <li style={navItemStyle}>
-      <button 
-        onClick={() => handleEditionChange("edicao1")} 
-        style={{ 
-          textDecoration:selectedEdition === "edicao1" ?'underline': 'none',
-           backgroundColor:'transparent',
-           border:'none',
-           fontSize:'20px',
-           marginTop:'1rem',
-           fontWeight:'600',
-           color:'white'
-         }}      >
-        Edição 2024
-      </button>
-      </li>
-      <li style={navItemStyle}>
-      <button 
-        onClick={() => handleEditionChange("edicao2")} 
-        style={{ 
-           textDecoration:selectedEdition === "edicao2" ?'underline': 'none',
-            backgroundColor:'transparent',
-            border:'none',
-            fontSize:'20px',
-            marginTop:'1rem',
-            fontWeight:'600',
-            color:'white'
 
-          }}
-      >
-        Edição 2025
-      </button>
-      </li>
-    </ul>
-  </motion.nav>
-)}
+      {isVisible && (
+        <motion.nav
+          style={navStyle}
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+        >
+          <ul style={navListStyle}>
+
+            <li style={navItemStyle}>
+              <button
+                onClick={() => handleEditionChange("edicao3")}
+                style={{
+                  textDecoration: selectedEdition === "edicao3" ? 'underline' : 'none',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '20px',
+                  marginTop: '1rem',
+                  fontWeight: '600',
+                  color: 'white'
+                }}
+              >
+                3ª Edição
+              </button>
+            </li>
+
+            <li style={navItemStyle}>
+              <button
+                onClick={() => handleEditionChange("edicao2")}
+                style={{
+                  textDecoration: selectedEdition === "edicao2" ? 'underline' : 'none',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '20px',
+                  marginTop: '1rem',
+                  fontWeight: '600',
+                  color: 'white'
+
+                }}
+              >
+                2ª Edição
+              </button>
+            </li>
+
+            <li style={navItemStyle}>
+              <button
+                onClick={() => handleEditionChange("edicao1")}
+                style={{
+                  textDecoration: selectedEdition === "edicao1" ? 'underline' : 'none',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '20px',
+                  marginTop: '1rem',
+                  fontWeight: '600',
+                  color: 'white'
+                }}      >
+                1ª Edição
+              </button>
+            </li>
+          </ul>
+        </motion.nav>
+      )}
 
 
 
@@ -465,9 +484,15 @@ const fetchImages = async (edition: string) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 1 }}
             >
-              {selectedEdition === "edicao1" ? "16 & 17 Setembro 2024" : "20 & 21 Fevereiro 2025"}
+              {
+                selectedEdition === "edicao1"
+                  ? "16 & 17 Setembro 2024"
+                  : selectedEdition === "edicao2"
+                    ? "20 & 21 Fevereiro 2025"
+                    : "12 e 13 Julho 2025"
+              }
             </motion.p>
-        
+
             <motion.button
               className={styles.downloadAllButton}
               initial={{ opacity: 0, y: 20 }}
@@ -521,6 +546,10 @@ const fetchImages = async (edition: string) => {
           />
         </motion.div>
       </div>
+
+
+
+
 
       <div className={styles.videoSection}>
         <motion.div
@@ -576,6 +605,10 @@ const fetchImages = async (edition: string) => {
       )}
 
       */}
+
+
+
+
 
       {/* Gallery */}
       <div className={styles.gallery}>
@@ -725,7 +758,7 @@ const navListStyle = {
   justifyContent: "center",
   margin: 0,
   padding: 0,
-  zIndex:'10000'
+  zIndex: '10000'
 };
 
 const navItemStyle = {

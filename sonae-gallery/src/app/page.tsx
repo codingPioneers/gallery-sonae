@@ -5,7 +5,7 @@ import { Gallery } from './Gallery';
 const Page: React.FC = () => {
   const [selectedEdition, setSelectedEdition] = useState<string>(() => {
     // Initialize state from localStorage or default value
-    return localStorage.getItem("selectedEdition") || 'edicao2';
+    return localStorage.getItem("selectedEdition") || 'edicao3';
   });
 
   // Update localStorage whenever selectedEdition changes
