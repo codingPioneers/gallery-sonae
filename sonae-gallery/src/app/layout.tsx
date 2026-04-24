@@ -27,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        <title>SONAE Gallery</title>
         <link rel="icon" href="/icon.png" sizes="64x64" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>

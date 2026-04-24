@@ -380,6 +380,22 @@ export const Gallery: React.FC<GalleryProps> = ({ selectedEdition, setSelectedEd
 
             <li style={navItemStyle}>
               <button
+                onClick={() => handleEditionChange("edicao4")}
+                style={{
+                  textDecoration: selectedEdition === "edicao4" ? 'underline' : 'none',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '20px',
+                  marginTop: '1rem',
+                  fontWeight: '600',
+                  color: 'white'
+                }}
+              >
+                4ª Edição
+              </button>
+            </li>
+            <li style={navItemStyle}>
+              <button
                 onClick={() => handleEditionChange("edicao3")}
                 style={{
                   textDecoration: selectedEdition === "edicao3" ? 'underline' : 'none',
@@ -489,7 +505,9 @@ export const Gallery: React.FC<GalleryProps> = ({ selectedEdition, setSelectedEd
                   ? "16 & 17 Setembro 2024"
                   : selectedEdition === "edicao2"
                     ? "20 & 21 Fevereiro 2025"
-                    : "12 e 13 Julho 2025"
+                    : selectedEdition === "edicao3"
+                      ? "12 e 13 Julho 2025"
+                      : "16 & 17 Abril 2026"
               }
             </motion.p>
 
